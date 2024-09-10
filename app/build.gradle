@@ -1,4 +1,6 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+}
 
 android {
     compileSdk 33
@@ -33,8 +35,16 @@ android {
             }
         }
     }
+
     buildFeatures {
         buildConfig true
+    }
+}
+
+configurations {
+    // Configuração personalizada para resolver dependências de teste
+    customTestRuntime {
+        canBeResolved = true
     }
 }
 
@@ -52,4 +62,28 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.robolectric:robolectric:4.10.3'
     testImplementation 'org.mockito:mockito-inline:5.0.0'
+    customTestRuntime 'org.evosuite:evosuite-standalone-runtime:1.0.6'
+
+}
+
+// Tarefa personalizada para gerar testes para todas as classes
+tasks.register('generateTestsForAllClasses', DefaultTask) {
+    doFirst {
+        def classesDir = file("${project.buildDir}/intermediates/classes/debug")
+        def testClasspath = configurations.customTestRuntime.asPath
+        def classFiles = fileTree(dir: classesDir, include: '**/*.class')
+
+        classFiles.each { File classFile ->
+            def className = classFile.relativePath.toString().replace('.class', '').replace('/', '.')
+            if (className.startsWith('me.chester.minitruco')) { // Ajuste o filtro para o pacote base correto
+                exec {
+                    commandLine 'java', '-cp', "${testClasspath}:${classesDir}", 'org.evosuite.EvoSuite',
+                        '-class', className,
+                        '-projectCP', classesDir,
+                        '-Dsearch_budget=60', // Tempo máximo de busca em segundos
+                        '-Dtest_case_gen=ALL' // Tipo de geração de casos de teste
+                }
+            }
+        }
+    }
 }
