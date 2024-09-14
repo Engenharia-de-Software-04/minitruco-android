@@ -26,48 +26,49 @@ public class JogadorHumano extends me.chester.minitruco.core.JogadorHumano {
 
     private final MesaView mesa;
 
-    int valorProximaAposta;
+    int valProxAposta;
 
-    public JogadorHumano(TrucoActivity activity, MesaView mesa) {
+    public JogadorHumano(final TrucoActivity activity, final MesaView mesa) {
+        super();
         this.activity = activity;
         this.mesa = mesa;
     }
 
     @Override
-    public void cartaJogada(Jogador j, Carta c) {
+    public void cartaJogada(final Jogador jogador2, final Carta carta2) {
         mesa.escondePergunta();
         mesa.setPosicaoVez(0);
         mesa.escondeBotaoAumento();
         mesa.escondeBotaoAbertaFechada();
-        mesa.descarta(c, posicaoNaTela(j));
-        LOGGER.log(Level.INFO, "Jogador na posicao de tela " + posicaoNaTela(j)
-                + " jogou " + c);
+        mesa.descarta(carta2, posicaoNaTela(jogador2));
+        LOGGER.log(Level.INFO, "Jogador na posicao de tela " + posicaoNaTela(jogador2)
+                + " jogou " + carta2);
     }
 
     @Override
-    public void decidiuMaoDeX(Jogador j, boolean aceita, int rndFrase) {
-        if (posicaoNaTela(j) == 3 && aceita) {
+    public void decidiuMaoDeX(final Jogador jogador2,final boolean aceita, final int rndFrase) {
+        if (posicaoNaTela(jogador2) == 3 && aceita) {
             mesa.escondePergunta();
         }
         if (aceita) {
             activity.setValorMao(partida.getModo().valorDaMaoDeX());
         }
-        mesa.diz(aceita ? "mao_de_x_sim" : "mao_de_x_nao", posicaoNaTela(j), 1500, rndFrase);
+        mesa.diz(aceita ? "mao_de_x_sim" : "mao_de_x_nao", posicaoNaTela(jogador2), 1500, rndFrase);
     }
 
     @Override
-    public void entrouNoJogo(Jogador j, Partida p) {
+    public void entrouNoJogo(Jogador jogador2, Partida partidaAtual) {
 
     }
 
     @Override
-    public void informaMaoDeX(Carta[] cartasParceiro) {
+    public void informaMaoDeX(final Carta[] cartasParceiro) {
         mesa.maoDeX(cartasParceiro);
     }
 
     @Override
-    public void inicioMao(Jogador jogadorQueAbre) {
-        valorProximaAposta = 3;
+    public void inicioMao(final Jogador jogadorQueAbre) {
+        valProxAposta = 3;
         for (int rodada = 1; rodada <= 3; rodada++) {
             activity.setResultadoRodada(rodada, 0);
         }
@@ -79,14 +80,14 @@ public class JogadorHumano extends me.chester.minitruco.core.JogadorHumano {
     }
 
     @Override
-    public void inicioPartida(int placarEquipe1, int placarEquipe2) {
+    public void inicioPartida(final int placarEquipe1,final int placarEquipe2) {
         activity.placar[0] = placarEquipe1;
         activity.placar[1] = placarEquipe2;
         activity.atualizaPlacar(placarEquipe1, placarEquipe2);
     }
 
     @Override
-    public void jogoAbortado(int posicao, int rndFrase) {
+    public void jogoAbortado(final int posicao,final int rndFrase) {
         if (posicao != 0 && mesa != null) {
             mesa.diz("abortou", convertePosicaoJogadorParaPosicaoTela(posicao),
                     1000, rndFrase);
@@ -99,17 +100,17 @@ public class JogadorHumano extends me.chester.minitruco.core.JogadorHumano {
     }
 
     @Override
-    public void jogoFechado(int numEquipeVencedora, int rndFrase) {
-        boolean ganhei = (numEquipeVencedora == this.getEquipe());
+    public void jogoFechado(final int numEquipeVenc,final int rndFrase) {
+        final boolean ganhei = numEquipeVenc == this.getEquipe();
         mesa.diz(ganhei ? "vitoria" : "derrota", 1, 1000, rndFrase);
         mesa.aguardaFimAnimacoes();
-        activity.jogoFechado(numEquipeVencedora);
+        activity.jogoFechado(numEquipeVenc);
     }
 
     @Override
-    public void maoFechada(int[] pontosEquipe) {
-        int pontosNos = pontosEquipe[getEquipe() - 1];
-        int pontosRivais = pontosEquipe[getEquipeAdversaria() - 1];
+    public void maoFechada(final int[] pontosEquipe) {
+        final int pontosNos = pontosEquipe[getEquipe() - 1];
+        final int pontosRivais = pontosEquipe[getEquipeAdversaria() - 1];
         activity.atualizaPlacar(pontosNos, pontosRivais);
         activity.setValorMao(0);
         mesa.escondeBotaoAumento();
@@ -119,68 +120,69 @@ public class JogadorHumano extends me.chester.minitruco.core.JogadorHumano {
     }
 
     @Override
-    public void pediuAumentoAposta(Jogador j, int valor, int rndFrase) {
+    public void pediuAumentoAposta(final Jogador jogador2,final int valor, final int rndFrase) {
         LOGGER.log(Level.INFO, "pedindo para mostrar pergunta aumento");
-        mesa.pedeAumento(posicaoNaTela(j), valor, rndFrase);
+        mesa.pedeAumento(posicaoNaTela(jogador2), valor, rndFrase);
     }
 
     @Override
-    public void aceitouAumentoAposta(Jogador j, int valor, int rndFrase) {
-        if (j.getEquipe() == this.getEquipe()) {
+    public void aceitouAumentoAposta( final Jogador jogador2, final int valor, final int rndFrase) {
+        if (jogador2.getEquipe() == this.getEquipe()) {
             // Numa partida sem bluetooth/etc, o bot não aumenta, só
             // sinaliza a intenção de aumentar
-            if (partida instanceof PartidaLocal && ((PartidaLocal) partida).isIgnoraDecisao(j)) {
-                mesa.diz("aumento_quero", posicaoNaTela(j), 1500, rndFrase);
+            if (partida instanceof PartidaLocal && ((PartidaLocal) partida).isIgnoraDecisao(jogador2)) {
+                mesa.diz("aumento_quero", posicaoNaTela(jogador2), 1500, rndFrase);
                 return;
             }
             // Nós aceitamos um truco, então podemos pedir aumento (se o valor atual ainda permitir)
-            valorProximaAposta = partida.getModo().valorSeHouverAumento(valor);
+            valProxAposta = partida.getModo().valorSeHouverAumento(valor);
         } else {
             // Eles aceitaram um truco, temos que esperar eles pedirem
-            valorProximaAposta = 0;
+            valProxAposta = 0;
         }
         mesa.escondePergunta();
-        mesa.diz("aumento_sim", posicaoNaTela(j), 1500, rndFrase);
+        mesa.diz("aumento_sim", posicaoNaTela(jogador2), 1500, rndFrase);
         mesa.aceitouAumentoAposta();
         activity.setValorMao(valor);
     }
 
     @Override
-    public void recusouAumentoAposta(Jogador j, int rndFrase) {
-        mesa.diz("aumento_nao", posicaoNaTela(j), 1300, rndFrase);
+    public void recusouAumentoAposta( final Jogador jogador2, final int rndFrase) {
+        mesa.diz("aumento_nao", posicaoNaTela(jogador2), 1300, rndFrase);
     }
 
     @Override
-    public void rodadaFechada(int numRodada, int resultado,
-            Jogador jogadorQueTorna) {
+    public void rodadaFechada( final int numRodada, final int resultado,
+            final Jogador jogadorQueTorna) {
+        int novoResultado = resultado;
         if (getEquipe() == 2) {
             // Se o humano nao é equipe 1 e não for empate, troca o resultado
             if (resultado == 1) {
-                resultado = 2;
+                novoResultado = 2;
             } else if (resultado == 2) {
-                resultado = 1;
+                novoResultado = 1;
             }
         }
         mesa.escondePergunta();
         mesa.setPosicaoVez(0);
-        mesa.atualizaResultadoRodada(numRodada, resultado, jogadorQueTorna);
+        mesa.atualizaResultadoRodada(numRodada, novoResultado, jogadorQueTorna);
     }
 
     @Override
-    public void vez(Jogador j, boolean podeFechada) {
-        LOGGER.log(Level.INFO, "vez do jogador " + posicaoNaTela(j));
+    public void vez( final Jogador jogador2, final boolean podeFechada) {
+        LOGGER.log(Level.INFO, "vez do jogador " + posicaoNaTela(jogador2));
         mesa.escondeBotaoAumento();
         mesa.escondeBotaoAbertaFechada();
-        if (j.equals(this)) {
-            if ((valorProximaAposta > 0) && partida.isPlacarPermiteAumento()) {
-                mesa.mostraBotaoAumento(valorProximaAposta);
+        if (jogador2.equals(this)) {
+            if ((valProxAposta > 0) && partida.isPlacarPermiteAumento()) {
+                mesa.mostraBotaoAumento(valProxAposta);
             }
             if (podeFechada) {
                 mesa.mostraBotaoAbertaFechada();
             }
         }
-        mesa.vez(j.equals(this));
-        mesa.setPosicaoVez(posicaoNaTela(j));
+        mesa.vez(jogador2.equals(this));
+        mesa.setPosicaoVez(posicaoNaTela(jogador2));
     }
 
     /**
@@ -194,15 +196,15 @@ public class JogadorHumano extends me.chester.minitruco.core.JogadorHumano {
      * @return 1 para a posição inferior, 2 para a direita, 3 para cima, 4 para
      *         esquerda
      */
-    private int posicaoNaTela(Jogador j) {
-        int pos = j.getPosicao() - this.getPosicao() + 1;
+    private int posicaoNaTela( final Jogador jogador2) {
+        int pos = jogador2.getPosicao() - this.getPosicao() + 1;
         if (pos < 1) {
             pos = pos + 4;
         }
         return pos;
     }
 
-    private int convertePosicaoJogadorParaPosicaoTela(int posicaoJogador) {
+    private int convertePosicaoJogadorParaPosicaoTela( final int posicaoJogador) {
         int pos = posicaoJogador - this.getPosicao() + 1;
         if (pos < 1) {
             pos = pos + 4;
