@@ -76,7 +76,7 @@ public class MesaView extends View {
      */
     private final Vector<CartaVisual> cartasJogadas = new Vector<>(12);
 
-    private static final Random random = new Random();
+    private static final Random RANDOM = new Random();
     private final Paint paintPergunta = new Paint();
     private float density;
     private Drawable indicadorDrag;
@@ -123,8 +123,8 @@ public class MesaView extends View {
     /**
      * Posição do baralho (decorativo) na mesa
      */
-    private int topBaralho,
-        leftBaralho;
+    private int topBaralho;
+    private int leftBaralho;
 
     /**
      * Timestamp em que as animações em curso irão acabar
@@ -151,7 +151,7 @@ public class MesaView extends View {
 
     private int posicaoBalao = 1;
     private long mostraBalaoAte = System.currentTimeMillis();
-    String fraseBalao = null;
+    public String fraseBalao = null;
     private boolean visivel = false;
 
     public boolean isInicializada() {
@@ -163,7 +163,7 @@ public class MesaView extends View {
      * o display -> forçando um redraw várias vezes por segundo)
      * <p>
      */
-    final Thread threadAnimacao = new Thread(new Runnable() {
+    private final Thread threadAnimacao = new Thread(new Runnable() {
         @Override
         public void run() {
             final int tempoEntreFramesAnimando = 1000 / FPS_ANIMANDO;
@@ -192,8 +192,7 @@ public class MesaView extends View {
             try {
                 Thread.sleep(tempoMS);
             } catch (InterruptedException e) {
-                // Não faz nada; vamos interromper esse sleep sempre que
-                // uma animação começar!
+                // Não faz nada; vamos interromper esse sleep sempre que uma animação começar!
             }
 
         }
@@ -273,36 +272,33 @@ public class MesaView extends View {
      * coisas vão aparecer)
      */
     @Override
-    public void onSizeChanged(final int w,final  int h, int oldw, int oldh) {
+    public void onSizeChanged(final int weight,final  int height, int oldw, int oldh) {
 
         // Ajusta o tamanho da carta (tudo depende dele) ao da mesa e os
         // "pontos de referência" importantes (baralho decorativo, tamanho do
         // texto, etc.)
-        CartaVisual.ajustaTamanho(w, h);
+        CartaVisual.ajustaTamanho(weight, height);
         final int delta = CartaVisual.altura / 24;
-        leftBaralho = w - CartaVisual.largura - delta * 3;
+        leftBaralho = weight - CartaVisual.largura - delta * 3;
         topBaralho = delta;
         final DisplayMetrics displayMetrics = Resources.getSystem().getDisplayMetrics();
         tamanhoFonte = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_PX,
-            Math.min(w, h) / divisorTamanhoFonte,
+            Math.min(weight, height) / divisorTamanhoFonte,
             displayMetrics
         );
 
         // Na primeira chamada (inicialização), instanciamos as cartas
         if (!inicializada) {
-            for (int i = 0; i < cartas.length; i++) {
-                cartas[i] = new CartaVisual(this, leftBaralho, topBaralho, null, corFundoCartaBalao);
-                cartas[i].movePara(leftBaralho, topBaralho);
-            }
+            instanciandoCartas();
             cartas[0].visible = false;
         }
 
         // Define posição e tamanho da caixa de pergunta e seus botões
         final int larguraPergunta = (int) (tamanhoFonte * 11);
         final int alturaPergunta = (int) (larguraPergunta / 2.2f);
-        final int topPergunta = (h - alturaPergunta) / 2;
-        final int leftPergunta = (w - larguraPergunta) / 2;
+        final int topPergunta = (height - alturaPergunta) / 2;
+        final int leftPergunta = (weight - larguraPergunta) / 2;
         rectPergunta = new Rect(leftPergunta, topPergunta, leftPergunta + larguraPergunta, topPergunta + alturaPergunta);
         final int alturaBotao = (int) (alturaPergunta * 0.30f);
         final int margemBotao = (int) (8 * density);
@@ -324,14 +320,14 @@ public class MesaView extends View {
         // (são quadrados cujo lado é a altura da carta)
         rectBotaoAumento = new RectF(
             margemBotao,
-            h - margemBotao - CartaVisual.altura,
+            height - margemBotao - CartaVisual.altura,
             margemBotao + CartaVisual.altura,
-            h - margemBotao
+            height - margemBotao
         );
         rectBotaoAbertaFechada = new RectF(
-            w - margemBotao - CartaVisual.altura,
+            weight - margemBotao - CartaVisual.altura,
             rectBotaoAumento.top,
-            w - margemBotao,
+            weight - margemBotao,
             rectBotaoAumento.bottom
         );
 
@@ -341,28 +337,19 @@ public class MesaView extends View {
         cartas[2].movePara(leftBaralho + delta, topBaralho + delta);
         cartas[3].movePara(leftBaralho, topBaralho);
 
-        if (!inicializada) {
-            threadAnimacao.start();
-        } else {
+        if (inicializada) {
             // Rolou um resize, reposiciona as cartas não-decorativas
             for (int i = 0; i <= 15; i++) {
-                final CartaVisual cv = cartas[i];
-                if (cv != null) {
-                    cv.resetBitmap();
+                final CartaVisual cartaVisual = cartas[i];
+                if (cartaVisual != null) {
+                    cartaVisual.resetBitmap();
                     if (i >= 4) {
                         final int numJogador = (i - 1) / 3;
-                        if (trucoActivity != null && trucoActivity.partida != null && trucoActivity.partida.finalizada) {
-                            cv.movePara(leftBaralho, topBaralho);
-                        } else if (cv.descartada) {
-                            cv.movePara(calcPosLeftDescartada(numJogador), calcPosTopDescartada(numJogador));
-                        } else {
-                            final int pos = (i - 1) % 3;
-                            cv.movePara(calcPosLeftCarta(numJogador, pos), calcPosTopCarta(numJogador, pos));
-                        }
+                        reposicionandoCartas(cartaVisual, numJogador, i);
                     }
                 }
             }
-        }
+        }else {     threadAnimacao.start();        }
 
         if (!inicializada && isInEditMode()) {
             velocidade = 4;
@@ -370,6 +357,24 @@ public class MesaView extends View {
         }
 
         inicializada = true;
+    }
+
+    private void reposicionandoCartas(final CartaVisual cartaVisual,final int numJogador,final int inteiro) {
+        if (trucoActivity != null && trucoActivity.partida != null && trucoActivity.partida.finalizada) {
+            cartaVisual.movePara(leftBaralho, topBaralho);
+        } else if (cartaVisual.descartada) {
+            cartaVisual.movePara(calcPosLeftDescartada(numJogador), calcPosTopDescartada(numJogador));
+        } else {
+            final int pos = (inteiro - 1) % 3;
+            cartaVisual.movePara(calcPosLeftCarta(numJogador, pos), calcPosTopCarta(numJogador, pos));
+        }
+    }
+
+    private void instanciandoCartas() {
+        for (int i = 0; i < cartas.length; i++) {
+            cartas[i] = new CartaVisual(this, leftBaralho, topBaralho, null, corFundoCartaBalao);
+            cartas[i].movePara(leftBaralho, topBaralho);
+        }
     }
 
     /**
@@ -464,14 +469,12 @@ public class MesaView extends View {
     public boolean onTouchEvent(final MotionEvent event) {
         final int x = (int) event.getX();
         final int y = (int) event.getY();
-        boolean retorno = super.onTouchEvent(event);
+        final boolean retorno = true;
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (rectPergunta.contains(x, y)) {
-                    ultimoyDaPergunta = y;
-                }
-                retorno = true;
-            case MotionEvent.ACTION_UP:
+                if (rectPergunta.contains(x, y)) {  ultimoyDaPergunta = y;  }
+                break;
+            case MotionEvent.ACTION_UP: {
                 ultimoyDaPergunta = -1;
                 if (rectBotaoSim.contains(x, y)) {
                     respondePergunta(true);
@@ -494,8 +497,9 @@ public class MesaView extends View {
                         jogaCarta(i - 4);
                     }
                 }
-                retorno =  true;
-            case MotionEvent.ACTION_MOVE:
+                break;
+            }
+            case MotionEvent.ACTION_MOVE: {
                 if (ultimoyDaPergunta > -1 && (mostrarPerguntaMaoDeX || mostrarPerguntaAumento)) {
                     int dy = y - ultimoyDaPergunta;
                     if (rectPergunta.top + dy < 0) {
@@ -511,9 +515,11 @@ public class MesaView extends View {
                     rectBotaoNao.top = rectBotaoNao.top + dy;
                     rectBotaoNao.bottom = rectBotaoNao.bottom + dy;
                 }
-                retorno =  true;
-            default:
-                retorno =  super.onTouchEvent(event);
+                break;
+            }
+            default: {
+                return super.onTouchEvent(event);
+                            }
         }
         return retorno;
     }
@@ -581,22 +587,22 @@ public class MesaView extends View {
         // Distribui as cartas em círculo
         for (int i = 0; i <= 2; i++) {
             for (int j = 1; j <= 4; j++) {
-                final CartaVisual c = cartas[4 + i + 3 * (j - 1)];
-                c.setFechada(true);
-                entregaCarta(c, j, i);
+                final CartaVisual cartaVisual = cartas[4 + i + 3 * (j - 1)];
+                cartaVisual.setFechada(true);
+                entregaCarta(cartaVisual, j, i);
             }
         }
 
         // Atribui o valor correto às cartas do jogador e exibe
         for (int i = 0; i <= 2; i++) {
-            final CartaVisual c = cartas[4 + i];
+            final CartaVisual cartaVisual = cartas[4 + i];
             if (isInEditMode()) {
-                c.setLetra("A23".charAt(i));
-                c.setNaipe(i);
+                cartaVisual.setLetra("A23".charAt(i));
+                cartaVisual.setNaipe(i);
             } else {
-                c.copiaCarta(trucoActivity.jogadorHumanoView.getCartas()[i]);
+                cartaVisual.copiaCarta(trucoActivity.jogadorHumanoView.getCartas()[i]);
             }
-            c.setFechada(false);
+            cartaVisual.setFechada(false);
         }
 
         // Abre o vira, se for manilha nova
@@ -620,13 +626,13 @@ public class MesaView extends View {
         aguardaFimAnimacoes();
         cartas[0].visible = false;
         for (int i = 4; i <= 15; i++) {
-            final CartaVisual c = cartas[i];
-            if ((c.top != topBaralho) || (c.left != leftBaralho)) {
-                c.movePara(leftBaralho, topBaralho, 50);
-                c.copiaCarta(null);
-                c.descartada = false;
-                c.escura = false;
-                cartasJogadas.remove(c);
+            final CartaVisual cartaVisual = cartas[i];
+            if ((cartaVisual.top != topBaralho) || (cartaVisual.left != leftBaralho)) {
+                cartaVisual.movePara(leftBaralho, topBaralho, 50);
+                cartaVisual.copiaCarta(null);
+                cartaVisual.descartada = false;
+                cartaVisual.escura = false;
+                cartasJogadas.remove(cartaVisual);
             }
         }
     }
@@ -634,7 +640,7 @@ public class MesaView extends View {
     /**
      * Joga a carta no meio da mesa
      */
-    public void descarta(final Carta c,final  int posicao) {
+    public void descarta(final Carta carta,final  int posicao) {
 
         aguardaFimAnimacoes();
 
@@ -644,7 +650,7 @@ public class MesaView extends View {
         final int leftFinal = calcPosLeftDescartada(posicao);
 
         // Pega uma carta visual naquela posição...
-        CartaVisual cv = null;
+        CartaVisual cartaVisual = null;
         for (int i = 0; i <= 2; i++) {
             final CartaVisual cvCandidata = cartas[i + 1 + posicao * 3];
             // ...que não tenha sido descartada...
@@ -653,23 +659,23 @@ public class MesaView extends View {
             }
             // ...e, no caso de um humano (ou parceiro em mão de 10/11), que
             // corresponda à carta da partida
-            cv = cvCandidata;
-            if (c.equals(cvCandidata)) {
+            cartaVisual = cvCandidata;
+            if (carta.equals(cvCandidata)) {
                 break;
             }
         }
 
         // Não deveria acontecer, mas como é só animação, podemos ignorar
         // se a carta não estiver na mão
-        if (cv == null) {
+        if (cartaVisual == null) {
             return;
         }
 
         // Executa a animação de descarte
-        cv.copiaCarta(c);
-        cv.movePara(leftFinal, topFinal, 200);
-        cv.descartada = true;
-        cartasJogadas.addElement(cv);
+        cartaVisual.copiaCarta(carta);
+        cartaVisual.movePara(leftFinal, topFinal, 200);
+        cartaVisual.descartada = true;
+        cartasJogadas.addElement(cartaVisual);
 
     }
 
@@ -696,18 +702,22 @@ public class MesaView extends View {
     /**
      * @return Coordenada x da i-ésima carta na mão do jogador em questão
      */
-    private int calcPosLeftCarta(final int numJogador,final  int i) {
+    private int calcPosLeftCarta(final int numJogador,final  int inteiro) {
         final int deslocamentoHorizontalEntreCartas = CartaVisual.largura * 7 / 8;
         int retorno = 0;
         switch (numJogador) {
             case 1:
             case 3:
-                retorno =  (getWidth() / 2) - (CartaVisual.largura / 2) + (i - 1) * deslocamentoHorizontalEntreCartas;
+                retorno =  (getWidth() / 2) - (CartaVisual.largura / 2) + (inteiro - 1) * deslocamentoHorizontalEntreCartas;
+                break;
             case 2:
                 retorno =  getWidth() - CartaVisual.largura;
+                break;
             case 4:
+                break;
             default:
                 retorno =  0;
+                break;
         }
         return retorno;
     }
@@ -715,18 +725,20 @@ public class MesaView extends View {
     /**
      * @return Coordenada y da i-ésima carta na mão do jogador em questão
      */
-    private int calcPosTopCarta(final int numJogador,final  int i) {
+    private int calcPosTopCarta(final int numJogador,final  int inteiro) {
         final int deslocamentoVerticalEntreCartas = CartaVisual.altura / 12;
+        int retorno = 0;
         switch (numJogador) {
             case 1:
-                return getHeight() - CartaVisual.altura;
+                retorno = getHeight() - CartaVisual.altura;
             case 2:
             case 4:
-                return getHeight() / 2 - CartaVisual.altura / 2 - (i - 1) * deslocamentoVerticalEntreCartas;
+                retorno = getHeight() / 2 - CartaVisual.altura / 2 - (inteiro - 1) * deslocamentoVerticalEntreCartas;
             case 3:
             default:
-                return 0;
+                retorno = 0;
         }
+        return retorno;
     }
 
 
@@ -781,7 +793,7 @@ public class MesaView extends View {
         }
 
         // Desenha as cartas restantes, e o vira por cima de todas
-        for (CartaVisual carta : cartas) {
+        for (final CartaVisual carta : cartas) {
             if (carta != null && !cartasJogadas.contains(carta) && carta != cartas[0]) {
                 carta.draw(canvas);
             }
@@ -843,7 +855,7 @@ public class MesaView extends View {
             jogaCarta(0);
             jogaCarta(1);
             jogaCarta(2);
-            respondePergunta(random.nextBoolean());
+            respondePergunta(RANDOM.nextBoolean());
         }
     }
 
@@ -887,6 +899,8 @@ public class MesaView extends View {
             case 4:
                 canvas.drawText("\u21E6", CartaVisual.largura * 15 / 12, getHeight() / 2, paintSetaVez);
                 break;
+            default:
+                break;
         }
     }
 
@@ -929,8 +943,7 @@ public class MesaView extends View {
     private void desenhaBalao(final Canvas canvas) {
         if (fraseBalao != null && mostraBalaoAte > System.currentTimeMillis()) {
 
-            // Determina o tamanho e a posição do balão e o quadrante da
-            // ponta
+            // Determina o tamanho e a posição do balão e o quadrante da ponta
             final int MARGEM_BALAO_LEFT = (int) tamanhoFonte;
             final int MARGEM_BALAO_TOP = (int) tamanhoFonte / 2;
             final Paint paintFonte = new Paint();
@@ -942,8 +955,8 @@ public class MesaView extends View {
 
             final int largBalao = bounds.width() + 2 * MARGEM_BALAO_LEFT;
             final int altBalao = (int) (bounds.height() + 2.5 * MARGEM_BALAO_TOP);
-            int x = 0,
-                y = 0;
+            int x = 0;
+            int y = 0;
             int quadrantePonta = 0;
             switch (posicaoBalao) {
                 case 1:
@@ -965,6 +978,8 @@ public class MesaView extends View {
                     x = 3;
                     y = (canvas.getHeight() - altBalao) / 2 - CartaVisual.altura;
                     quadrantePonta = 3;
+                    break;
+                default:
                     break;
             }
 
