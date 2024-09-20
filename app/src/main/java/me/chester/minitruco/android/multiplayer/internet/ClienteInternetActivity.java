@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 
 import me.chester.minitruco.BuildConfig;
 import me.chester.minitruco.android.CriadorDePartida;
-import me.chester.minitruco.android.JogadorHumano;
+import me.chester.minitruco.android.JogadorHumanoView;
 import me.chester.minitruco.android.PreferenceUtils;
 import me.chester.minitruco.android.SalaActivity;
 import me.chester.minitruco.android.TrucoActivity;
@@ -333,9 +333,9 @@ public class ClienteInternetActivity extends SalaActivity {
     }
 
     @Override
-    public Partida criaNovaPartida(JogadorHumano jogadorHumano) {
+    public Partida criaNovaPartida(JogadorHumanoView jogadorHumanoView) {
         enviaLinha("Q");
-        partida = new PartidaRemota(this, jogadorHumano, posJogador, modo);
+        partida = new PartidaRemota(this, jogadorHumanoView, posJogador, modo);
         return partida;
     }
 

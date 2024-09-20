@@ -7,7 +7,7 @@ package me.chester.minitruco.android.multiplayer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import me.chester.minitruco.android.JogadorHumano;
+import me.chester.minitruco.android.JogadorHumanoView;
 import me.chester.minitruco.android.SalaActivity;
 import me.chester.minitruco.core.Baralho;
 import me.chester.minitruco.core.Carta;
@@ -36,7 +36,7 @@ public class PartidaRemota extends Partida {
 
     private final static Logger LOGGER = Logger.getLogger("PartidaRemota");
     private final SalaActivity cliente;
-    private JogadorHumano jogadorHumano;
+    private JogadorHumanoView jogadorHumanoView;
     /**
      * Esse baralho é apenas para sortear cartas quando alguém joga uma fechada
      * (as cartas, mesmo fechadas, têm que ser únicas)
@@ -53,7 +53,7 @@ public class PartidaRemota extends Partida {
      *
      * @param cliente
      *          Faz a comunicação com a camada físico (Bluetooth, Internet)
-     * @param jogadorHumano
+     * @param jogadorHumanoView
      *          Faz a comunicação com a UI
      * @param posJogador
      *          posição (1 a 4) na qual o jogadorHumano se encontra, do ponto
@@ -63,7 +63,7 @@ public class PartidaRemota extends Partida {
      *          String de 1 caractere recebida pelo servidor que determina
      *          se o truco é paulista, mineiro, etc.
      */
-    public PartidaRemota(SalaActivity cliente, JogadorHumano jogadorHumano, int posJogador, String modoStr) {
+    public PartidaRemota(SalaActivity cliente, JogadorHumanoView jogadorHumanoView, int posJogador, String modoStr) {
         super(Modo.fromString(modoStr));
         this.cliente = cliente;
 
@@ -71,7 +71,7 @@ public class PartidaRemota extends Partida {
         // (preenchendo as outras com dummies)
         for (int i = 1; i <= 4; i++) {
             if (i == posJogador) {
-                adiciona(jogadorHumano);
+                adiciona(jogadorHumanoView);
             } else {
                 adiciona(new JogadorDummy());
             }
@@ -83,12 +83,12 @@ public class PartidaRemota extends Partida {
      *
      * @return objeto que representa o humano
      */
-    public JogadorHumano getJogadorHumano() {
-        if (jogadorHumano == null)
+    public JogadorHumanoView getJogadorHumano() {
+        if (jogadorHumanoView == null)
             for (int i = 1; i <= 4; i++)
-                if (getJogador(i) instanceof JogadorHumano)
-                    jogadorHumano = (JogadorHumano) getJogador(i);
-        return jogadorHumano;
+                if (getJogador(i) instanceof JogadorHumanoView)
+                    jogadorHumanoView = (JogadorHumanoView) getJogador(i);
+        return jogadorHumanoView;
 
     }
 

@@ -482,7 +482,7 @@ public class MesaView extends View {
                 if (mostrarBotaoAumento && rectBotaoAumento.contains(x, y)) {
                     mostrarBotaoAumento = false;
                     statusVez = VEZ_HUMANO_AGUARDANDO;
-                    trucoActivity.partida.aumentaAposta(trucoActivity.jogadorHumano);
+                    trucoActivity.partida.aumentaAposta(trucoActivity.jogadorHumanoView);
                 }
                 if (mostrarBotaoAbertaFechada && rectBotaoAbertaFechada.contains(x, y)) {
                     vaiJogarFechada = !vaiJogarFechada;
@@ -529,10 +529,10 @@ public class MesaView extends View {
         new Thread(() -> {
             if (mostrarPerguntaAumento) {
                 mostrarPerguntaAumento = false;
-                trucoActivity.partida.respondeAumento(trucoActivity.jogadorHumano, resposta);
+                trucoActivity.partida.respondeAumento(trucoActivity.jogadorHumanoView, resposta);
             } else if (mostrarPerguntaMaoDeX) {
                 mostrarPerguntaMaoDeX = false;
-                trucoActivity.partida.decideMaoDeX(trucoActivity.jogadorHumano, resposta);
+                trucoActivity.partida.decideMaoDeX(trucoActivity.jogadorHumanoView, resposta);
             }
         }).start();
     }
@@ -550,7 +550,7 @@ public class MesaView extends View {
 
         statusVez = STATUS_VEZ_OUTRO;
         carta.setFechada(vaiJogarFechada);
-        trucoActivity.partida.jogaCarta(trucoActivity.jogadorHumano, carta);
+        trucoActivity.partida.jogaCarta(trucoActivity.jogadorHumanoView, carta);
     }
 
     private long calcTempoAteFimAnimacaoMS() {
@@ -594,7 +594,7 @@ public class MesaView extends View {
                 c.setLetra("A23".charAt(i));
                 c.setNaipe(i);
             } else {
-                c.copiaCarta(trucoActivity.jogadorHumano.getCartas()[i]);
+                c.copiaCarta(trucoActivity.jogadorHumanoView.getCartas()[i]);
             }
             c.setFechada(false);
         }

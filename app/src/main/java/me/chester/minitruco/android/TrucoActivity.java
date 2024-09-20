@@ -51,7 +51,7 @@ public class TrucoActivity extends Activity {
     private static boolean mIsViva = false;
     final int[] placar = new int[2];
     boolean partidaAbortada = false;
-    JogadorHumano jogadorHumano;
+    JogadorHumanoView jogadorHumanoView;
     Partida partida;
     private MesaView mesa;
     private TextView textViewPartidas;
@@ -113,8 +113,8 @@ public class TrucoActivity extends Activity {
         preferences.edit().putInt("statPartidas",
             preferences.getInt("statPartidas", 0) + 1
         ).apply();
-        jogadorHumano = new JogadorHumano(this, mesa);
-        partida = CriadorDePartida.iniciaNovaPartida(jogadorHumano);
+        jogadorHumanoView = new JogadorHumanoView(this, mesa);
+        partida = CriadorDePartida.iniciaNovaPartida(jogadorHumanoView);
         mIsViva = true;
     }
 
@@ -263,7 +263,7 @@ public class TrucoActivity extends Activity {
         }
         // Mesmo que já esteja encerrada, é preciso avisar para que os
         // jogadores restantes voltem para a sala.
-        partida.abandona(jogadorHumano.getPosicao());
+        partida.abandona(jogadorHumanoView.getPosicao());
     }
 
     @Override
@@ -358,7 +358,7 @@ public class TrucoActivity extends Activity {
     public void jogoFechado(int numEquipeVencedora) {
         runOnUiThread(() -> {
             int[] pontos = getPlacarDePartidas();
-            if (jogadorHumano.getEquipe() == numEquipeVencedora) {
+            if (jogadorHumanoView.getEquipe() == numEquipeVencedora) {
                 setPlacarDePartidas(pontos[0] + 1, pontos[1]);
             } else {
                 setPlacarDePartidas(pontos[0], pontos[1] + 1);
@@ -367,7 +367,7 @@ public class TrucoActivity extends Activity {
             // sempre na posição 1 da partida), e no multiplayer apenas
             // se o jogador for o gerente da sala internet ou se for o
             // servidor bluetooth (em ambos os casos, estará na posição 1).
-            if (jogadorHumano.getPosicao() == 1) {
+            if (jogadorHumanoView.getPosicao() == 1) {
                 btnNovaPartida.setVisibility(View.VISIBLE);
                 if (partida.semJogadoresRemotos()) {
                     promoveJogoInternet();

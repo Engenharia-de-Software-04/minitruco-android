@@ -18,17 +18,17 @@ import me.chester.minitruco.core.PartidaLocal;
  * <code>MesaView</code>, que mostram a partida ao usuário, capturam seu input e
  * executam as jogadas.
  */
-public class JogadorHumano extends me.chester.minitruco.core.JogadorHumano {
+public class JogadorHumanoView extends me.chester.minitruco.core.JogadorHumano {
 
-    private final static Logger LOGGER = Logger.getLogger("JogadorHumano");
+    private static final Logger LOGGER = Logger.getLogger("JogadorHumano");
 
     private final TrucoActivity activity;
 
     private final MesaView mesa;
 
-    int valProxAposta;
+    private int valProxAposta;
 
-    public JogadorHumano(final TrucoActivity activity, final MesaView mesa) {
+    public JogadorHumanoView(final TrucoActivity activity, final MesaView mesa) {
         super();
         this.activity = activity;
         this.mesa = mesa;
@@ -41,8 +41,7 @@ public class JogadorHumano extends me.chester.minitruco.core.JogadorHumano {
         mesa.escondeBotaoAumento();
         mesa.escondeBotaoAbertaFechada();
         mesa.descarta(carta2, posicaoNaTela(jogador2));
-        LOGGER.log(Level.INFO, "Jogador na posicao de tela " + posicaoNaTela(jogador2)
-                + " jogou " + carta2);
+        LOGGER.log(Level.INFO, "Jogador na posição de tela {0} jogou {1}", new Object[]{posicaoNaTela(jogador2), carta2});
     }
 
     @Override
@@ -58,7 +57,6 @@ public class JogadorHumano extends me.chester.minitruco.core.JogadorHumano {
 
     @Override
     public void entrouNoJogo(Jogador jogador2, Partida partidaAtual) {
-
     }
 
     @Override
@@ -170,7 +168,7 @@ public class JogadorHumano extends me.chester.minitruco.core.JogadorHumano {
 
     @Override
     public void vez( final Jogador jogador2, final boolean podeFechada) {
-        LOGGER.log(Level.INFO, "vez do jogador " + posicaoNaTela(jogador2));
+        LOGGER.log(Level.INFO, "vez do jogador {0}", posicaoNaTela(jogador2));
         mesa.escondeBotaoAumento();
         mesa.escondeBotaoAbertaFechada();
         if (jogador2.equals(this)) {

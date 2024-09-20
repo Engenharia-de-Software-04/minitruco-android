@@ -360,7 +360,7 @@ public class TituloActivity extends SalaActivity {
     }
 
     @Override
-    public Partida criaNovaPartida(JogadorHumano jogadorHumano) {
+    public Partida criaNovaPartida(JogadorHumanoView jogadorHumanoView) {
         String modo = getLetraDoModo(this);
         if (PreferenceUtils.isValeUm(this)) {
             modo = "1";
@@ -368,7 +368,7 @@ public class TituloActivity extends SalaActivity {
         boolean humanoDecide = preferences.getBoolean("humanoDecide", true);
         boolean jogoAutomatico = preferences.getBoolean("jogoAutomatico", false);
         Partida novaPartida = new PartidaLocal(humanoDecide, jogoAutomatico, modo);
-        novaPartida.adiciona(jogadorHumano);
+        novaPartida.adiciona(jogadorHumanoView);
         novaPartida.adiciona(new JogadorBot()); // Rival à direita
         novaPartida.adiciona(new JogadorBot(new EstrategiaGasparotto(), null)); // Parceira(o)
         novaPartida.adiciona(new JogadorBot()); // Rival à esquerda

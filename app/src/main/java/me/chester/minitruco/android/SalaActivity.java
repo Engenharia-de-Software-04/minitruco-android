@@ -232,10 +232,10 @@ public abstract class SalaActivity extends AppCompatActivity {
      * Normalmente é chamado pelo CriadorDePartida, que sabe qual Sala
      * acionar (e, portanto, qual o tipo de partida apropriado).
      *
-     * @param jogadorHumano jogador humano que será associado à partida e
+     * @param jogadorHumanoView jogador humano que será associado à partida e
      *                      à activity (para intermediação de eventos)
      */
-    public abstract Partida criaNovaPartida(JogadorHumano jogadorHumano);
+    public abstract Partida criaNovaPartida(JogadorHumanoView jogadorHumanoView);
 
     /**
      * Envia uma linha de texto para a conexão remota.

@@ -17,7 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import me.chester.minitruco.BuildConfig;
-import me.chester.minitruco.android.JogadorHumano;
+import me.chester.minitruco.android.JogadorHumanoView;
 import me.chester.minitruco.android.TrucoActivity;
 import me.chester.minitruco.android.multiplayer.PartidaRemota;
 import me.chester.minitruco.core.Partida;
@@ -224,8 +224,8 @@ public class ClienteBluetoothActivity extends BluetoothActivity implements
         }
     }
 
-    public Partida criaNovaPartida(JogadorHumano jogadorHumano) {
-        partida = new PartidaRemota(this, jogadorHumano, posJogador, modo);
+    public Partida criaNovaPartida(JogadorHumanoView jogadorHumanoView) {
+        partida = new PartidaRemota(this, jogadorHumanoView, posJogador, modo);
         return partida;
     }
 

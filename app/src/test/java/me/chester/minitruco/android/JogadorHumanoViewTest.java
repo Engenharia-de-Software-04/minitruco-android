@@ -11,26 +11,26 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
-class JogadorHumanoTest {
+class JogadorHumanoViewTest {
 
-    JogadorHumano jogadorHumano;
+    JogadorHumanoView jogadorHumanoView;
     private MesaView mockMesaView;
 
     @BeforeEach
     void setUp() {
         mockMesaView = mock(MesaView.class);
-        jogadorHumano = spy(new JogadorHumano(mock(TrucoActivity.class), mockMesaView));
+        jogadorHumanoView = spy(new JogadorHumanoView(mock(TrucoActivity.class), mockMesaView));
     }
 
     @Test
     void dizFraseDeVitoriaOuDerrotaNoFimDoJogo() {
-        doReturn(1).when(jogadorHumano).getEquipe();
-        jogadorHumano.jogoFechado(1, 0);
-        jogadorHumano.jogoFechado(2, 0);
+        doReturn(1).when(jogadorHumanoView).getEquipe();
+        jogadorHumanoView.jogoFechado(1, 0);
+        jogadorHumanoView.jogoFechado(2, 0);
 
-        doReturn(2).when(jogadorHumano).getEquipe();
-        jogadorHumano.jogoFechado(1, 0);
-        jogadorHumano.jogoFechado(2, 0);
+        doReturn(2).when(jogadorHumanoView).getEquipe();
+        jogadorHumanoView.jogoFechado(1, 0);
+        jogadorHumanoView.jogoFechado(2, 0);
 
         InOrder inOrder = inOrder(mockMesaView);
 

@@ -13,17 +13,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Handler;
 import android.view.View;
-
-import androidx.preference.PreferenceManager;
 
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import me.chester.minitruco.android.JogadorHumano;
+import me.chester.minitruco.android.JogadorHumanoView;
 import me.chester.minitruco.core.Jogador;
 import me.chester.minitruco.core.JogadorBot;
 import me.chester.minitruco.core.Partida;
@@ -277,9 +274,9 @@ public class ServidorBluetoothActivity extends BluetoothActivity {
         atualizaClientes();
     }
 
-    public Partida criaNovaPartida(JogadorHumano jogadorHumano) {
+    public Partida criaNovaPartida(JogadorHumanoView jogadorHumanoView) {
         Partida partida = new PartidaLocal(false, false, modo);
-        partida.adiciona(jogadorHumano);
+        partida.adiciona(jogadorHumanoView);
         for (int i = 0; i <= 2; i++) {
             if (jogadores[i] != null) {
                 partida.adiciona(jogadores[i]);
