@@ -56,7 +56,7 @@ public class PartidaLocal extends Partida {
      * Jogador que está pedindo aumento de aposta (pedindo truco, 6, 9 ou 12).
      * Se for null, ninguém está pedindo
      */
-    private Jogador jogadorPedindoAumento;
+    private Jogador jogadorPedindoAumento = null;
 
     /**
      * Status das respsotas para um pedido de aumento de aposta para cada
@@ -104,6 +104,14 @@ public class PartidaLocal extends Partida {
 
     private final boolean humanoDecide;
     private final boolean jogoAutomatico;
+
+    private static final int PRIMEIRA_MAO = 1;
+    private static final int SEGUNDA_MAO = 2;
+    private static final int TERCEIRA_MAO = 3;
+
+    private static final int SEGUNDA_RODADA = 2;
+    private static final int TERCEIRA_RODADA = 3;
+
 
     /*
      * (non-Javadoc)
@@ -308,6 +316,7 @@ public class PartidaLocal extends Partida {
             // Se houve vencedor, passa a vez para o jogador que fechou a
             // vitória, senão deixa quem abriu a mão anterior abrir a próxima
             if (getResultadoRodada(numRodadaAtual) != 3) {
+                assert jogadorQueTorna != null;
                 posJogadorDaVez = jogadorQueTorna.getPosicao();
             } else {
                 jogadorQueTorna = getJogadorDaVez();
@@ -320,29 +329,7 @@ public class PartidaLocal extends Partida {
             }
 
             // Verifica se já temos vencedor na rodada
-            int resultadoRodada = 0;
-            if (numRodadaAtual == 2) {
-                if (getResultadoRodada(1) == 3 && getResultadoRodada(2) != 3) {
-                    // Empate na 1a. mão, quem fez a 2a. leva
-                    resultadoRodada = getResultadoRodada(2);
-                } else if (getResultadoRodada(1) != 3
-                        && getResultadoRodada(2) == 3) {
-                    // Empate na 2a. mão, quem fez a 1a. leva
-                    resultadoRodada = getResultadoRodada(1);
-                } else if (getResultadoRodada(1) == getResultadoRodada(2)
-                        && getResultadoRodada(1) != 3) {
-                    // Quem faz as duas primeiras leva
-                    resultadoRodada = getResultadoRodada(2);
-                }
-            } else if (numRodadaAtual == 3) {
-                if (getResultadoRodada(3) != 3) {
-                    // Quem faz a 3a. leva
-                    resultadoRodada = getResultadoRodada(3);
-                } else {
-                    // Se a 3a. empatou, a 1a. decide
-                    resultadoRodada = getResultadoRodada(1);
-                }
-            }
+            int resultadoRodada = getResultadoRodada();
 
             // Se já tivermos vencedor (ou empate final), notifica e abre uma
             // nova mao, senão segue a vida na mão seguinte
@@ -361,6 +348,33 @@ public class PartidaLocal extends Partida {
             notificaVez();
         }
 
+    }
+
+    private int getResultadoRodada() {
+        int resultadoRodada = 0;
+        if (numRodadaAtual == SEGUNDA_RODADA) {
+            if (getResultadoRodada(PRIMEIRA_MAO) == 3 && getResultadoRodada(SEGUNDA_MAO) != 3) {
+                // Empate na 1a. mão, quem fez a 2a. leva
+                resultadoRodada = getResultadoRodada(SEGUNDA_MAO);
+            } else if (getResultadoRodada(PRIMEIRA_MAO) != 3
+                    && getResultadoRodada(SEGUNDA_MAO) == 3) {
+                // Empate na 2a. mão, quem fez a 1a. leva
+                resultadoRodada = getResultadoRodada(PRIMEIRA_MAO);
+            } else if (getResultadoRodada(PRIMEIRA_MAO) == getResultadoRodada(SEGUNDA_MAO)
+                    && getResultadoRodada(PRIMEIRA_MAO) != 3) {
+                // Quem faz as duas primeiras leva
+                resultadoRodada = getResultadoRodada(SEGUNDA_MAO);
+            }
+        } else if (numRodadaAtual == TERCEIRA_RODADA) {
+            if (getResultadoRodada(TERCEIRA_MAO) != 3) {
+                // Quem faz a 3a. leva
+                resultadoRodada = getResultadoRodada(TERCEIRA_MAO);
+            } else {
+                // Se a 3a. empatou, a 1a. decide
+                resultadoRodada = getResultadoRodada(PRIMEIRA_MAO);
+            }
+        }
+        return resultadoRodada;
     }
 
     /**
@@ -541,7 +555,7 @@ public class PartidaLocal extends Partida {
             // Primeiro notifica todos os jogadores da recusa
             // (se for um aceite ignorado, diz pro humano que aceitou, só pra ele saber o que seria feito)
             for (Jogador interessado : jogadores) {
-                if (aceitou && ignorarAceite && (interessado == jogadores[posParceiro - 1])) {
+                if (aceitou && interessado.equals(jogadores[posParceiro - 1])) {
                     interessado.aceitouAumentoAposta(j, valorMao, rndFrase);
                 } else {
                     interessado.recusouAumentoAposta(j, rndFrase);
