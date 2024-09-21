@@ -168,8 +168,10 @@ public class PartidaLocal extends Partida {
         numRodadaAtual = 1;
         jogadorAbriuMao = jogadorAbriuRodada = jogadorQueAbre;
 
-        LOGGER.log(Level.INFO, "Abrindo mao com j" + jogadorQueAbre.getPosicao()
-                + ",manilha=" + getManilha());
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "Abrindo mao com j" + jogadorQueAbre.getPosicao() + ", manilha=" + getManilha());
+        }
+
 
         // Abre a primeira rodada, informando a carta da mesa e quem vai abrir
         posJogadorDaVez = jogadorQueAbre.getPosicao();
@@ -206,14 +208,15 @@ public class PartidaLocal extends Partida {
         Jogador j = this.jogadorQueJogou;
         Carta c = this.cartaJogada;
 
-        LOGGER.log(Level.INFO, "processaJogada: j" + j.getPosicao() + " joga " + c +
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "processaJogada: j" + j.getPosicao() + " joga " + c +
                 "; jogadorPedindoAumento:" + (jogadorPedindoAumento == null ? "null" : jogadorPedindoAumento.getPosicao()) +
                 "; isAguardandoRespostaMaoDeX:" + isAguardandoRespostaMaoDeX() +
-                "; jogadorDaVez: "+getJogadorDaVez().getPosicao());
+                "; jogadorDaVez: " + getJogadorDaVez().getPosicao());
+        }
 
-        // Se a partida acabou, a mesa não estiver completa, já houver alguém
-        // trucando, estivermos aguardando ok da mão de 10/11 ou não for a vez do
-        // cara, recusa
+        // partida finalizada, mesa incompleta, já houver alguém trucando,
+        // estivermos aguardando ok da mão de 10/11 ou não for a vez do cara, recusa
         if (finalizada || numJogadores < 4 || jogadorPedindoAumento != null
                 || (isAguardandoRespostaMaoDeX())
                 || !j.equals(getJogadorDaVez())) {
@@ -225,7 +228,9 @@ public class PartidaLocal extends Partida {
         for (int i = 0; i <= 2; i++) {
             for (int k = 0; k <= 3; k++) {
                 if (c.equals(cartasJogadasPorRodada[i][k])) {
-                    LOGGER.log(Level.INFO, "carta jogada anteriormente: "+ c + "," + i + "," + k);
+                    if (LOGGER.isLoggable(Level.INFO)) {
+                        LOGGER.log(Level.INFO, "carta jogada anteriormente: " + c + ", " + i + ", " + k);
+                    }
                     renotificaVezBot();
                     return;
                 }
@@ -240,18 +245,22 @@ public class PartidaLocal extends Partida {
             }
         }
         if (cartaNaMaoDoJogador == null) {
-            LOGGER.log(Level.INFO, "j" + j.getPosicao() + " tentou jogar " + c +
-                    " mas esta carta não está na mão dele");
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.log(Level.INFO, "j" + j.getPosicao() + " tentou jogar " + c + " mas esta carta não está na mão dele");
+            }
             renotificaVezBot();
             return;
         }
+
 
         // Garante que a regra para carta fechada seja respeitada
         if (!isPodeFechada()) {
             c.setFechada(false);
         }
 
-        LOGGER.log(Level.INFO, "J" + j.getPosicao() + " joga " + c);
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "J" + j.getPosicao() + " joga " + c);
+        }
 
         // Dá a carta como jogada, notificando os jogadores
         cartasJogadasPorRodada[numRodadaAtual - 1][j.getPosicao() - 1] = c;
@@ -292,8 +301,9 @@ public class PartidaLocal extends Partida {
                 }
             }
 
-            LOGGER.log(Level.INFO, "Rodada fechou. Resultado: "
-                    + getResultadoRodada(numRodadaAtual));
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.log(Level.INFO, "Rodada fechou. Resultado: " + getResultadoRodada(numRodadaAtual));
+            }
 
             // Se houve vencedor, passa a vez para o jogador que fechou a
             // vitória, senão deixa quem abriu a mão anterior abrir a próxima
@@ -359,8 +369,10 @@ public class PartidaLocal extends Partida {
      */
     private void fechaMao() {
 
-        LOGGER.log(Level.INFO, "Mao fechou. Placar: " + pontosEquipe[0] + " a "
-                + pontosEquipe[1]);
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "Mao fechou. Placar: " + pontosEquipe[0] + " a " + pontosEquipe[1]);
+        }
+
 
         // Notifica os interessados que a rodada acabou, e, se for o caso, que o
         // partida acabou também
@@ -427,32 +439,31 @@ public class PartidaLocal extends Partida {
         if (finalizada || !aguardandoRespostaMaoDeX[j.getPosicao() - 1])
             return;
 
-        LOGGER.log(Level.INFO, "J" + j.getPosicao() + (aceita ? "" : " nao")
-                + " quer jogar mao de 11 ");
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "J" + j.getPosicao() + (aceita ? "" : " nao") + " quer jogar mao de 11 ");
+        }
+
+        boolean aceitaDecisao = aceita;
 
         // Se for um bot parceiro de humano numa partida 100% local, trata como recusa
         // (quem decide mão de 10/11 é o humano) e nem notifica (silenciando o balão)
         if (isIgnoraDecisao(j)) {
-            aceita = false;
+            aceitaDecisao = false;
         } else {
             // Avisa os outros jogadores da decisão
             int rndFrase = Math.abs(rand.nextInt());
             for (Jogador interessado : jogadores) {
-                interessado.decidiuMaoDeX(j, aceita, rndFrase);
+                interessado.decidiuMaoDeX(j, aceitaDecisao, rndFrase);
             }
         }
 
         aguardandoRespostaMaoDeX[j.getPosicao() - 1] = false;
 
-        if (aceita) {
-            // Se aceitou, desencana da resposta do parceiro e pode tocar o
-            // jogo, valendo o valor da mão de 10/11
+        if (aceitaDecisao) {
             aguardandoRespostaMaoDeX[j.getParceiro() - 1] = false;
             valorMao = modo.valorDaMaoDeX();
             notificaVez();
         } else {
-            // Se recusou (e o parceiro também), a equipe adversária ganha
-            // a pontuação da mão comum
             if (!aguardandoRespostaMaoDeX[j.getParceiro() - 1]) {
                 pontosEquipe[j.getEquipeAdversaria() - 1] += modo
                         .valorInicialDaMao();
@@ -478,7 +489,9 @@ public class PartidaLocal extends Partida {
             return;
         }
 
-        LOGGER.log(Level.INFO, "Jogador  " + j.getPosicao() + " pede aumento");
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "Jogador " + j.getPosicao() + " pede aumento");
+        }
 
         // Atualiza o status
         this.jogadorPedindoAumento = j;
@@ -506,8 +519,9 @@ public class PartidaLocal extends Partida {
             return;
         }
 
-        LOGGER.log(Level.INFO, "Jogador  " + j.getPosicao()
-                + (aceitou ? "aceitou" : "recusou"));
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "Jogador " + j.getPosicao() + (aceitou ? " aceitou" : " recusou"));
+        }
 
         int posParceiro = (j.getPosicao() + 1) % 4 + 1;
         // Se, numa partida 100% local (só o humano e bots)
@@ -743,7 +757,8 @@ public class PartidaLocal extends Partida {
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "O sono foi interrompido: ", e);
+            Thread.currentThread().interrupt();
         }
     }
 
