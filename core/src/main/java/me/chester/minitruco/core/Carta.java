@@ -11,25 +11,6 @@ package me.chester.minitruco.core;
  */
 public class Carta {
 
-    /**
-     * Cria uma carta com letra e naipe definidos
-     */
-    public Carta(char letra, int naipe) {
-        setLetra(letra);
-        setNaipe(naipe);
-    }
-
-    /**
-     * Cria uma carta baseado em sua representação string
-     *
-     * @param sCarta
-     *            letra e naipe da carta, conforme retornado por
-     *            <code>toString()</code>
-     * @see Carta#toString()
-     */
-    public Carta(String sCarta) {
-        this(sCarta.charAt(0), "coepx".indexOf(sCarta.charAt(1)));
-    }
 
     /**
      * Constante que representa o naipe de copas
@@ -76,6 +57,32 @@ public class Carta {
     private boolean fechada = false;
 
     /**
+     * Cria uma carta com letra e naipe definidos
+     */
+    public Carta(char letra, int naipe) {
+        this.letra = validaLetra(letra); // Validação feita diretamente
+        this.naipe = naipe;
+    }
+
+    /**
+     * Cria uma carta baseado em sua representação string
+     *
+     * @param sCarta
+     *            letra e naipe da carta, conforme retornado por
+     *            <code>toString()</code>
+     * @see Carta#toString()
+     */
+    public Carta(String sCarta) {
+        this(sCarta.charAt(0), "coepx".indexOf(sCarta.charAt(1)));
+    }
+
+    private char validaLetra(char letra) {
+        if (LETRAS_VALIDAS.indexOf(letra) != -1 || letra == LETRA_NENHUMA) {
+            return letra;
+        }
+        throw new IllegalArgumentException("Letra inválida: " + letra);
+    }
+    /**
      * Determina a letra (valor facial) da carta.
      * <p>
      * Letras válidas são as da constante LETRAS_VALIDAS. Se a letra for
@@ -83,9 +90,7 @@ public class Carta {
      *
      */
     public void setLetra(char letra) {
-        if (LETRAS_VALIDAS.indexOf(letra) != -1 || letra == LETRA_NENHUMA) {
             this.letra = letra;
-        }
     }
 
     public char getLetra() {
@@ -129,6 +134,7 @@ public class Carta {
      *
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object outroObjeto) {
         if ((outroObjeto instanceof Carta)) {
             Carta outraCarta = (Carta) outroObjeto;
@@ -143,6 +149,7 @@ public class Carta {
      *
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode() {
         return getLetra() * 256 + getNaipe();
     }
@@ -167,6 +174,7 @@ public class Carta {
      * deve ser alterada (ou, se for, o construtor baseado em caractere deve ser
      * alterado de acordo).
      */
+    @Override
     public String toString() {
         return letra + "" + ("coepx").charAt(naipe);
     }
