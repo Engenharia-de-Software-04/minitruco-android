@@ -20,6 +20,8 @@ import java.util.logging.Logger;
 public class JogadorBot extends Jogador implements Runnable {
     private final static Logger LOGGER = Logger.getLogger("JogadorBot");
     public static final String APELIDO_BOT = "bot";
+    private static final String JOGADOR_LABEL = "Jogador ";
+
 
     private boolean fingeQuePensa = true;
 
@@ -87,6 +89,8 @@ public class JogadorBot extends Jogador implements Runnable {
      */
     private boolean podeFechada = false;
 
+    private static final int LIMITE_AUMENTO = 12;
+
     public void setFingeQuePensa(boolean fingeQuePensa) {
         this.fingeQuePensa = fingeQuePensa;
     }
@@ -95,7 +99,7 @@ public class JogadorBot extends Jogador implements Runnable {
     public void vez(Jogador j, boolean podeFechada) {
         if (this.equals(j)) {
             if (LOGGER.isLoggable(Level.INFO)) {
-                LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " recebeu notificacao de vez");
+                LOGGER.log(Level.INFO, JOGADOR_LABEL + this.getPosicao() + " recebeu notificacao de vez");
             }
             this.podeFechada = podeFechada;
             this.minhaVez = true;
@@ -140,7 +144,7 @@ public class JogadorBot extends Jogador implements Runnable {
 
     private void processaMinhaVez() {
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " viu que é sua vez");
+            LOGGER.log(Level.INFO, JOGADOR_LABEL + this.getPosicao() + " viu que é sua vez");
         }
 
         if (fingeQuePensa) {
@@ -172,7 +176,7 @@ public class JogadorBot extends Jogador implements Runnable {
 
     private void processaTrucoForaDeHora() {
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " pediu truco fora de hora");
+            LOGGER.log(Level.INFO, JOGADOR_LABEL + this.getPosicao() + " pediu truco fora de hora");
         }
         // Lógica para lidar com truco fora de hora
     }
@@ -182,7 +186,7 @@ public class JogadorBot extends Jogador implements Runnable {
         int posCartaAjustada = isFechada ? posCarta - 10: posCarta;
         if (isFechada) {
             if (LOGGER.isLoggable(Level.INFO)) {
-                LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " vai tentar jogar fechada");
+                LOGGER.log(Level.INFO, JOGADOR_LABEL + this.getPosicao() + " vai tentar jogar fechada");
             }
         }
 
@@ -201,13 +205,13 @@ public class JogadorBot extends Jogador implements Runnable {
 
         if (!minhaVez) {
             if (LOGGER.isLoggable(Level.INFO)) {
-                LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " IA pedir para jogar " + c + ", mas acabou a mão/rodada");
+                LOGGER.log(Level.INFO, JOGADOR_LABEL + this.getPosicao() + " IA pedir para jogar " + c + ", mas acabou a mão/rodada");
             }
             return;
         }
 
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " (" + this.estrategia + ") vai pedir para jogar " + c);
+            LOGGER.log(Level.INFO, JOGADOR_LABEL + this.getPosicao() + " (" + this.estrategia + ") vai pedir para jogar " + c);
         }
 
         partida.jogaCarta(this, c);
@@ -311,7 +315,7 @@ public class JogadorBot extends Jogador implements Runnable {
             // Nós aceitamos um truco, então podemos aumentar
             // (i.e., se foi truco, podemos pedir 6, se for 6, podemos pedir 9,
             // etc.) até o limite de 12
-            if (valor != 12) {
+            if (valor != LIMITE_AUMENTO) {
                 valorProximaAposta = valor + 3;
             }
         } else {
@@ -342,7 +346,7 @@ public class JogadorBot extends Jogador implements Runnable {
     public void maoFechada(int[] pontosEquipe) {
 
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao()
+            LOGGER.log(Level.INFO, JOGADOR_LABEL + this.getPosicao()
                 + " recebeu notificação de mão fechada; mudando minhaVez de " + minhaVez + " para false");
         }
 
