@@ -3,6 +3,8 @@ package me.chester.minitruco.core;
 /* SPDX-License-Identifier: BSD-3-Clause */
 /* Copyright © 2005-2023 Carlos Duarte do Nascimento "Chester" <cd@pobox.com> */
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
@@ -105,6 +107,7 @@ public class JogadorBot extends Jogador implements Runnable {
     // TODO quebrar um pouco esse método - OK (Refatorado)
     // TODO rever soluções provisórias do crash que era causado pela CPU
     //      tentar jogar carta da rodada anterior
+    @Override
     public void run() {
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.log(Level.INFO, "JogadorBot " + this + " (.run) iniciado");
@@ -129,7 +132,10 @@ public class JogadorBot extends Jogador implements Runnable {
                 processaRespostaAumento();
             }
         }
-        LOGGER.log(Level.INFO, "JogadorBot " + this + " (.run) finalizado");
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "JogadorBot " + this + " (.run) finalizado");
+        }
+
     }
 
     private void processaMinhaVez() {
@@ -173,27 +179,37 @@ public class JogadorBot extends Jogador implements Runnable {
 
     private void jogarCarta(int posCarta) {
         boolean isFechada = posCarta >= 10;
+        int posCartaAjustada = isFechada ? posCarta - 10: posCarta;
         if (isFechada) {
-            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " vai tentar jogar fechada");
-            posCarta -= 10;
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " vai tentar jogar fechada");
+            }
         }
 
         Carta c;
         try {
-            c = cartasRestantes.elementAt(posCarta);
+            c = cartasRestantes.get(posCartaAjustada);
         } catch (ArrayIndexOutOfBoundsException e) {
             if (LOGGER.isLoggable(Level.INFO)) {
                 LOGGER.log(Level.INFO, "Out Of Bounds tentando recuperar a carta de cartasRestantes", e);
             }
             return;
         }
+
         c.setFechada(isFechada && podeFechada);
-        cartasRestantes.removeElement(c);
+        cartasRestantes.remove(c);
+
         if (!minhaVez) {
-            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " IA pedir para jogar " + c + ", mas acabou a mão/rodada");
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " IA pedir para jogar " + c + ", mas acabou a mão/rodada");
+            }
             return;
         }
-        LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " (" + this.estrategia + ") vai pedir para jogar " + c);
+
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " (" + this.estrategia + ") vai pedir para jogar " + c);
+        }
+
         partida.jogaCarta(this, c);
         minhaVez = false;
     }
@@ -225,7 +241,7 @@ public class JogadorBot extends Jogador implements Runnable {
             sleep(1000 + random.nextInt(1000));
         }
 
-        boolean respostaMaoDeX = false;
+        boolean respostaMaoDeX;
         try {
             respostaMaoDeX = estrategia.aceitaMaoDeX(cartasDoParceiroDaMaoDeX, situacaoJogo);
         } catch (Exception e) {
@@ -254,6 +270,7 @@ public class JogadorBot extends Jogador implements Runnable {
 
     private Carta[] cartasDoParceiroDaMaoDeX;
 
+    @Override
     public void pediuAumentoAposta(Jogador j, int valor, int rndFrase) {
         if (j.getEquipe() == this.getEquipeAdversaria()) {
             recebiPedidoDeAumento = true;
@@ -273,7 +290,7 @@ public class JogadorBot extends Jogador implements Runnable {
         int numCartas = cartasRestantes.size();
         situacaoJogo.cartasJogador = new Carta[numCartas];
         for (int i = 0; i < numCartas; i++) {
-            Carta c = cartasRestantes.elementAt(i);
+            Carta c = cartasRestantes.get(i);
             situacaoJogo.cartasJogador[i] = new Carta(c.getLetra(),
                     c.getNaipe());
         }
@@ -316,10 +333,12 @@ public class JogadorBot extends Jogador implements Runnable {
 
     }
 
+    @Override
     public void rodadaFechada(int numMao, int resultado, Jogador jogadorQueTorna) {
         // Não faz nada
     }
 
+    @Override
     public void maoFechada(int[] pontosEquipe) {
 
         if (LOGGER.isLoggable(Level.INFO)) {
@@ -333,20 +352,23 @@ public class JogadorBot extends Jogador implements Runnable {
         recebiPedidoDeAumento = false;
     }
 
+    @Override
     public void jogoFechado(int numEquipeVencedora, int rndFrase) {
         // Não faz nada
     }
 
+    @Override
     public void cartaJogada(Jogador j, Carta c) {
         // Não faz nada
     }
 
+    @Override
     public void inicioMao(Jogador jogadorQueAbre) {
 
         // Guarda as cartas que estão na mão do jogador
-        cartasRestantes.removeAllElements();
+        cartasRestantes.clear();
         for (int i = 0; i <= 2; i++) {
-            cartasRestantes.addElement(this.getCartas()[i]);
+            cartasRestantes.add(this.getCartas()[i]);
         }
 
         // Libera o jogador para pedir truco (se nao estivermos em mao de 11)
@@ -357,21 +379,26 @@ public class JogadorBot extends Jogador implements Runnable {
     /**
      * Cartas que ainda não foram jogadas
      */
-    private final Vector<Carta> cartasRestantes = new Vector<>(3);
+    private final List<Carta> cartasRestantes = new ArrayList<>(3);
 
+
+    @Override
     public void inicioPartida(int placarEquipe1, int placarEquipe2) {
         // Por ora não faz nada
     }
 
+    @Override
     public void decidiuMaoDeX(Jogador j, boolean aceita, int rndFrase) {
         // Por ora não faz nada
     }
 
+    @Override
     public void informaMaoDeX(Carta[] cartasParceiro) {
         cartasDoParceiroDaMaoDeX = cartasParceiro != null? cartasParceiro.clone() : null;
         recebiPedidoDeMaoDeX = true;
     }
 
+    @Override
     public void jogoAbortado(int posicao, int rndFrase) {
         // Não precisa tratar
     }
