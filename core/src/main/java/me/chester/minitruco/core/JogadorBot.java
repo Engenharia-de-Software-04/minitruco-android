@@ -35,8 +35,11 @@ public class JogadorBot extends Jogador implements Runnable {
         } else {
             estrategia = e;
         }
-        LOGGER.info("Estrategia: " + estrategia.getClass().getName());
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.info("Estrategia: " + estrategia.getClass().getName());
+        }
         setNome(APELIDO_BOT);
+
         if (tf == null) {
             thread = new Thread(this);
         } else {
@@ -86,10 +89,12 @@ public class JogadorBot extends Jogador implements Runnable {
         this.fingeQuePensa = fingeQuePensa;
     }
 
+    @Override
     public void vez(Jogador j, boolean podeFechada) {
         if (this.equals(j)) {
-            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao()
-                    + " recebeu notificacao de vez");
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " recebeu notificacao de vez");
+            }
             this.podeFechada = podeFechada;
             this.minhaVez = true;
             this.estouAguardandoRepostaAumento = false;
@@ -97,147 +102,150 @@ public class JogadorBot extends Jogador implements Runnable {
     }
 
     // TODO ao invez de ser o próprio runnable, colocar num método e chamar no lambda
-    // TODO quebrar um pouco esse método
+    // TODO quebrar um pouco esse método - OK (Refatorado)
     // TODO rever soluções provisórias do crash que era causado pela CPU
     //      tentar jogar carta da rodada anterior
     public void run() {
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "JogadorBot " + this + " (.run) iniciado");
+        }
 
-        LOGGER.log(Level.INFO, "JogadorBot " + this + " (.run) iniciado");
         while (partida == null || !partida.finalizada) {
             sleep(100);
 
             if (minhaVez && !estouAguardandoRepostaAumento) {
-                LOGGER.log(Level.INFO, "Jogador " + this.getPosicao()
-                        + " viu que e' sua vez");
-
-                // Dá um tempinho, pra fingir que está "pensando"
-                if (fingeQuePensa) {
-                    sleep(random.nextInt(500));
-                }
-
-                // Atualiza a situação da partida (incluindo as cartas na mão)
-                atualizaSituacaoJogo();
-                situacaoJogo.podeFechada = podeFechada;
-
-                // Solicita que o estrategia jogue
-                int posCarta;
-                try {
-                    posCarta = estrategia.joga(situacaoJogo);
-                } catch (Exception e) {
-                    LOGGER.log(Level.INFO, "Erro em joga", e);
-                    posCarta = 0;
-                }
-
-                // Se a estratégia pediu truco, processa e desencana de jogar
-                // agora
-                if ((posCarta == -1) && (situacaoJogo.valorProximaAposta != 0)) {
-                    aceitaramTruco = false;
-                    numRespostasAguardando = 2;
-                    LOGGER.log(Level.INFO, "Jogador " + this.getPosicao()
-                            + " vai aumentar aposta");
-                    estouAguardandoRepostaAumento = true;
-                    partida.aumentaAposta(this);
-                    LOGGER.log(Level.INFO, "Jogador " + this.getPosicao()
-                            + " aguardando resposta");
-                    continue;
-                }
-
-                // Se a estratégia pediu truco fora de hora, ignora e joga a
-                // primeira carta
-                if (posCarta == -1) {
-                    LOGGER.log(Level.INFO, "Jogador" + this.getPosicao()
-                            + " pediu truco fora de hora");
-                    posCarta = 0;
-                }
-
-                // Joga a carta selecionada e remove ela da mão
-                boolean isFechada = posCarta >= 10;
-                if (isFechada) {
-                    LOGGER.log(Level.INFO, "Jogador" + this.getPosicao()
-                            + " vai tentar jogar fechada");
-                    posCarta -= 10;
-                }
-
-                Carta c;
-                try {
-                    c = cartasRestantes.elementAt(posCarta);
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    // Tentativa de resolver o out-of-bounds que surgiu na 2.3.x
-                    // Eu não consigo reproduzir nem faço idéia de como diabos ele
-                    // chega aqui com 0 elementos no array, mas vamos evitar o crash
-                    // e ver se tudo se resolve sozinho; não deve afetar quem
-                    // não tem o problema (como eu)
-                    LOGGER.log(Level.INFO, "Out Of Bounds tentando recuperar a carta de cartasRestantes", e);
-                    continue;
-                }
-                c.setFechada(isFechada && podeFechada);
-                cartasRestantes.removeElement(c);
-                if (!minhaVez) {
-                    // Isso acontece MUITO raramente, mas trava o jogo; na dúvida,
-                    // a gente seta o minhaVez para false no maoFechada() e
-                    // evita esse problema aqui
-                    // TODO: deixar rodando e ver se chega aqui, ou se setar pra false no maoFechada resolveu
-                    LOGGER.log(Level.INFO, "Jogador " + this.getPosicao()
-                        + "IA pedir para jogar " + c + ", mas acabou a mão/rodada");
-                    continue;
-                }
-                LOGGER.log(Level.INFO, "Jogador " + this.getPosicao()
-                        + " (" + this.estrategia + ") vai pedir para jogar " + c);
-                partida.jogaCarta(this, c);
-                minhaVez = false;
+                processaMinhaVez();
             }
 
             if (recebiPedidoDeAumento) {
-                recebiPedidoDeAumento = false;
-                atualizaSituacaoJogo();
-                sleep(1000 + random.nextInt(1000));
-                // O sync/if é só pra evitar resposta dupla entre 2 bots
-                synchronized (partida) {
-                    if (situacaoJogo.posJogadorPedindoAumento != 0) {
-                        boolean resposta = false;
-                        try {
-                            resposta = estrategia.aceitaTruco(situacaoJogo);
-                        } catch (Exception e) {
-                            LOGGER.log(Level.INFO, "Erro em aceite-aumento", e);
-                        }
-                        partida.respondeAumento(this, resposta);
-                    }
-                }
+                processaPedidoDeAumento();
             }
 
             if (recebiPedidoDeMaoDeX) {
-                recebiPedidoDeMaoDeX = false;
-                atualizaSituacaoJogo();
-                if (fingeQuePensa) {
-                    sleep(1000 + random.nextInt(1000));
-                }
-                boolean respostaMaoDeX = false;
-                try {
-                    respostaMaoDeX = estrategia.aceitaMaoDeX(
-                            cartasDoParceiroDaMaoDeX, situacaoJogo);
-                } catch (Exception e) {
-                    LOGGER.log(Level.INFO,
-                            "Erro em aceite-mao-de-x no jogador" + this.getPosicao(),
-                            e);
-                    respostaMaoDeX = random.nextBoolean();
-                }
-                partida.decideMaoDeX(this, respostaMaoDeX);
+                processaPedidoDeMaoDeX();
             }
 
             if (estouAguardandoRepostaAumento && (numRespostasAguardando == 0)) {
-                estouAguardandoRepostaAumento = false;
-                // Se aceitaram, vamos seguir o jogo
-                if (aceitaramTruco) {
-                    atualizaSituacaoJogo();
-                    situacaoJogo.valorProximaAposta = 0;
-                    minhaVez = true;
-                }
+                processaRespostaAumento();
             }
-
         }
         LOGGER.log(Level.INFO, "JogadorBot " + this + " (.run) finalizado");
-
     }
+
+    private void processaMinhaVez() {
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " viu que é sua vez");
+        }
+
+        if (fingeQuePensa) {
+            sleep(random.nextInt(500));
+        }
+
+        atualizaSituacaoJogo();
+        situacaoJogo.podeFechada = podeFechada;
+
+        int posCarta = tentarJogarCarta();
+
+        if (posCarta == -1) {
+            processaTrucoForaDeHora();
+        } else {
+            jogarCarta(posCarta);
+        }
+    }
+
+    private int tentarJogarCarta() {
+        try {
+            return estrategia.joga(situacaoJogo);
+        } catch (Exception e) {
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.log(Level.INFO, "Erro em joga", e);
+            }
+            return 0;
+        }
+    }
+
+    private void processaTrucoForaDeHora() {
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " pediu truco fora de hora");
+        }
+        // Lógica para lidar com truco fora de hora
+    }
+
+    private void jogarCarta(int posCarta) {
+        boolean isFechada = posCarta >= 10;
+        if (isFechada) {
+            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " vai tentar jogar fechada");
+            posCarta -= 10;
+        }
+
+        Carta c;
+        try {
+            c = cartasRestantes.elementAt(posCarta);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.log(Level.INFO, "Out Of Bounds tentando recuperar a carta de cartasRestantes", e);
+            }
+            return;
+        }
+        c.setFechada(isFechada && podeFechada);
+        cartasRestantes.removeElement(c);
+        if (!minhaVez) {
+            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " IA pedir para jogar " + c + ", mas acabou a mão/rodada");
+            return;
+        }
+        LOGGER.log(Level.INFO, "Jogador " + this.getPosicao() + " (" + this.estrategia + ") vai pedir para jogar " + c);
+        partida.jogaCarta(this, c);
+        minhaVez = false;
+    }
+
+    private void processaPedidoDeAumento() {
+        recebiPedidoDeAumento = false;
+        atualizaSituacaoJogo();
+        sleep(1000 + random.nextInt(1000));
+
+        synchronized (partida) {
+            if (situacaoJogo.posJogadorPedindoAumento != 0) {
+                boolean resposta = false;
+                try {
+                    resposta = estrategia.aceitaTruco(situacaoJogo);
+                } catch (Exception e) {
+                    if (LOGGER.isLoggable(Level.INFO)) {
+                        LOGGER.log(Level.INFO, "Erro em aceite-aumento", e);
+                    }
+                }
+                partida.respondeAumento(this, resposta);
+            }
+        }
+    }
+
+    private void processaPedidoDeMaoDeX() {
+        recebiPedidoDeMaoDeX = false;
+        atualizaSituacaoJogo();
+        if (fingeQuePensa) {
+            sleep(1000 + random.nextInt(1000));
+        }
+
+        boolean respostaMaoDeX = false;
+        try {
+            respostaMaoDeX = estrategia.aceitaMaoDeX(cartasDoParceiroDaMaoDeX, situacaoJogo);
+        } catch (Exception e) {
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.log(Level.INFO, "Erro em aceite-mao-de-x no jogador " + this.getPosicao(), e);
+            }
+            respostaMaoDeX = random.nextBoolean();
+        }
+        partida.decideMaoDeX(this, respostaMaoDeX);
+    }
+
+    private void processaRespostaAumento() {
+        estouAguardandoRepostaAumento = false;
+        if (aceitaramTruco) {
+            atualizaSituacaoJogo();
+            situacaoJogo.valorProximaAposta = 0;
+            minhaVez = true;
+        }
+    }
+
 
     private boolean recebiPedidoDeAumento = false;
     private boolean estouAguardandoRepostaAumento = false;
@@ -314,8 +322,10 @@ public class JogadorBot extends Jogador implements Runnable {
 
     public void maoFechada(int[] pontosEquipe) {
 
-        LOGGER.log(Level.INFO, "Jogador " + this.getPosicao()
-        + " recebeu notificação de mão fechada; mudando minhaVez de " + minhaVez + "para false");
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "Jogador " + this.getPosicao()
+                + " recebeu notificação de mão fechada; mudando minhaVez de " + minhaVez + " para false");
+        }
 
         // Cancela todas as jogadas em aguardo
         minhaVez = false;
@@ -358,7 +368,7 @@ public class JogadorBot extends Jogador implements Runnable {
     }
 
     public void informaMaoDeX(Carta[] cartasParceiro) {
-        cartasDoParceiroDaMaoDeX = cartasParceiro;
+        cartasDoParceiroDaMaoDeX = cartasParceiro != null? cartasParceiro.clone() : null;
         recebiPedidoDeMaoDeX = true;
     }
 
